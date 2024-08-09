@@ -11,7 +11,11 @@ import json
 import time
 import django.views.decorators.csrf
 from django.views.decorators.csrf import csrf_exempt
-# from django.contrib.auth import get_user_model
+from urllib.parse import urlparse
+from Utilities import Download_AzureBlobFiles
+from Utilities import Extract_PDF
+from Utilities import AzureCosmosVectorStoreContianer
+from django.contrib.auth import get_user_model
 import os
 from .models import User
 from API.SourceCode.BEES_QA import AzureCosmosQA
@@ -20,17 +24,17 @@ from azure.cosmos import CosmosClient, exceptions, PartitionKey
 # from AdminPanel.models import CustomUser
 from django.http import JsonResponse,HttpResponseBadRequest
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
+from django.core.files.storage import FileSystemStorage
 # # Initialize Cosmos Chat History Container:
 client = CosmosClient(os.getenv('WebChat_EndPoint'), os.getenv('WebChat_Key'))
 database = client.get_database_client(os.getenv('WebChat_DB'))
 History_container = database.get_container_client(os.getenv('WebChat_History_Container'))
 
+from azure.storage.blob import BlobServiceClient
 # User=get_user_model()
 # Create your views here.
 @guest
 def loginPage(request):
-    
     if  request.method =='POST':
         form=AuthenticationForm(data=request.POST)
         
@@ -41,7 +45,8 @@ def loginPage(request):
     else:
         intialData={'username':'', 'password':''}
         form=AuthenticationForm(initial=intialData)
-    return render(request, 'login.html',{'form':form})   
+    return render(request, 'login.html',{'form':form}) 
+      
 
 @login_required
 @csrf_exempt
@@ -552,6 +557,62 @@ def delete_user(request):
     else:
         return HttpResponseBadRequest('Invalid request method')
 
+@login_required  
+def fileUpload(request):
+    if request.method == 'POST' and request.FILES.getlist('upload'):
+        try:
+            # Azure Blob Storage account credentials
+            connection_string = os.getenv('Azure_Blob_ConnectionString')
+            container_name1 = os.getenv('Azure_Blob_ContainerName')
+            
+            container_name = "fileupload"
+             
+            # Create a BlobServiceClient object using the connection string
+
+            blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+
+            # Create a client to interact with the container
+
+            container_client = blob_service_client.get_container_client(container_name)
+
+            # Get the files from the request
+            files = request.FILES.getlist('upload')
+            
+            for file in files:
+                blob_client = container_client.get_blob_client(file.name)
+                blob_client.upload_blob(file, overwrite=True)
+
+                # Get the URL of the uploaded blob
+                blob_url = blob_client.url
+                # Extract the file name from the URL
+                parsed_url = urlparse(blob_url)
+                filename = os.path.basename(parsed_url.path)
+                # Call the function to download and process the file
+                filepath, file_exist = Download_AzureBlobFiles.Download_File(filename)
+                
+                if file_exist:
+                    # Process the file further as needed
+                    # (e.g., create vectors/chunks based on the file content)
+                    # You can call additional processing functions here
+                    Pdf_content = Extract_PDF.process_documents(filepath, "General", '1')
+                    if Pdf_content[0].page_content == '':
+                            error_details = f'Data is empty -1'
+                            continue
+                    else:
+                        AzureCosmosVectorStoreContianer.Load_ChunkData(Pdf_content)
+                else:
+                    return JsonResponse({'message': f'File could not be downloaded for processing: {file.name}', 'status': 'error'}, status=500)
+
+            
+             # Return a JSON response indicating success
+            return JsonResponse({'message': 'File uploaded successfully!', 'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'message': f"An error occurred: {str(e)}", 'status': 'error'}, status=500)
+
+    else:
+        user_groups = request.user.groups.all()
+        user_is_admin = user_groups.filter(name='Admin').exists()
+        return render(request, 'fileUpload.html',{'user_is_admin': user_is_admin}) 
 
 def logoutFuntion(request):
     logout(request)

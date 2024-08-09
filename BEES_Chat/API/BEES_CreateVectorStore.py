@@ -36,7 +36,7 @@ class BEES_Main:
         self.Cosmos_Client = CosmosDBManager(endpoint=os.getenv('WebChat_EndPoint'),
                                              master_key=os.getenv('WebChat_Key'))
         self.ChatMainContainer = self.Cosmos_Client.create_container(database_id=os.getenv('WebChat_DB'),
-                                                                     container_id='BEES_ChatMain',
+                                                                     container_id='Brad_ChatMain',
                                                                      partition_key_path="/ID")
 
     def GetProcessData(self):

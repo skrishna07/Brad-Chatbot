@@ -1,0 +1,222 @@
+{% extends 'layouts/base.html' %} 
+{% block title %} File Upload {% endblock title%}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+<style>
+    .container-fluid.mt--6 {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: calc(100vh - 90px); /* Adjust height based on header/footer height */
+    }
+    .upload-container {
+        text-align: center;
+        padding: 2rem; /* Adjust padding for space inside the box */
+        border: 2px dashed #007bff; /* Adjust border style if needed */
+        border-radius: 8px;
+        background-color: #f8f9fa; /* Light background for visibility */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        max-width: 100%; /* Ensure the container does not exceed the width of its parent */
+        box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    }
+
+.upload-container .upload-icon {
+    font-size: 50px;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.browse-btn {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    color: #fff;
+    background-color: #007bff; /* Adjust button color if needed */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.browse-btn:hover {
+    background-color: #0056b3; /* Darker shade for hover effect */
+}
+
+.upload-info {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #6c757d; /* Gray color for info text */
+}
+</style>
+{% endblock stylesheets %} 
+{% block content %}
+<!-- Header -->
+
+  <div class="card-header border-0">
+    <h3 class="mb-0">Upload Files</h3>
+  </div>
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+  
+  <!-- Page content -->
+  <div class="container-fluid mt--6" >
+    <div class="row" >
+      <div class="col mt-5" style="align-items: center;">
+        <div class="card">
+            <div id="message-container" style="display: none;" class="alert alert-success" role="alert">
+                <span id="message-text"></span>
+            </div>
+            <form  enctype="multipart/form-data" id="upload-form">
+                <div class="upload-container text-center" id="dropzone">
+                    <i class="fas fa-upload upload-icon"></i>
+                    <h2>Drag & Drop files to upload</h2>
+                    <p>Or</p>
+                    
+                    <input type="file" id="file-upload" name="upload" multiple>
+                        <div class="upload-info">
+                            <p>Supported files: PDF, JPEG, JPG, PNG</p>
+                            <p>Maximum file size: 10MB</p>
+                        </div>
+                        <div id="error-message" style="color: red; display: none;"></div>
+                    </div>
+                        <!-- Submit button -->
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+      </div>
+      <!-- Dark table -->
+    </div>
+{% endblock content %}
+
+<!-- Specific JS goes HERE -->
+{% block javascripts %}
+  
+
+<script>
+    $(document).ready(function() {
+        $('#upload-form').on('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+    
+            // Get the CSRF token
+            const csrftoken = getCookie('csrftoken');
+    
+            var formData = new FormData(this);
+            var errorMessage = '';
+            var hasFiles = $('#file-upload')[0].files.length > 0;
+            
+            console.log($('#file-upload')[0])
+            // Check if at least one file is selected
+            if (!hasFiles) {
+                errorMessage = 'Please select at least one file to upload.';
+            } 
+            else {
+                // Validate files before sending
+                const allowedExtensions = /(\.pdf|\.jpg|\.jpeg|\.png)$/i;
+                const files = $('#file-upload')[0].files;
+    
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (!allowedExtensions.exec(file.name)) {
+                        errorMessage = 'Invalid file type. Only PDF, JPEG, JPG, and PNG files are allowed.';
+                        break; // Stop processing if an invalid file type is found
+                    }
+                }
+            }
+    
+            if (errorMessage) {
+                $('#error-message').text(errorMessage).show();
+                return; // Stop execution if there's an error
+            }
+    
+            $.ajax({
+                url: "{% url 'fileUpload' %}", // Update with the correct URL
+                type: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken // Set the CSRF token in the request header
+                },
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    $('#error-message').hide();
+                    $('#message-text').text(response.message);
+                        $('#message-container').removeClass('alert-danger').addClass('alert-success').show();
+
+                        setTimeout(function() {
+                            $('#message-container').fadeOut();
+                        }, 5000);
+                    $('#upload-form')[0].reset(); // Reset the form after successful upload
+                },
+                error: function(xhr, status, error) {
+                    $('#error-message').text('An error occurred during the upload.').show();
+                }
+            });
+        });
+    
+        // Function to get the CSRF token from the cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    
+        // Handle drag-and-drop file uploads
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('file-upload');
+            const form = document.getElementById('upload-form');
+    
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+    
+            // Highlight dropzone when a file is dragged over it
+            dropzone.addEventListener('dragover', () => {
+                dropzone.classList.add('drop');
+            });
+    
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('drop');
+            });
+    
+            // Handle file drop
+            dropzone.addEventListener('drop', (e) => {
+                dropzone.classList.remove('drop');
+                const files = e.dataTransfer.files;
+                handleFiles(files);
+            });
+    
+            // Handle file input change
+            fileInput.addEventListener('change', (e) => {
+                const files = e.target.files;
+                handleFiles(files);
+            });
+    
+            function handleFiles(files) {
+                const dataTransfer = new DataTransfer();
+                Array.from(files).forEach(file => dataTransfer.items.add(file));
+                fileInput.files = dataTransfer.files;
+                $('#upload-form').submit(); // Trigger form submission via AJAX
+            }
+        });
+    });
+    </script>
+{% endblock javascripts %}
+</div>
