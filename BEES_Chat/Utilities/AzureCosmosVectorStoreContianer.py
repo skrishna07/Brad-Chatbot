@@ -17,9 +17,9 @@ cosmos_vector_property = "embedding"
 os.environ["AZURE_OPENAI_API_KEY"] = os.getenv('Azure_OPENAI_API_KEY')
 os.environ["AZURE_OPENAI_ENDPOINT"] = os.getenv('Azure_OPENAI_API_BASE')
 os.environ["AZURE_OPENAI_API_VERSION"] = "2023-09-15-preview"
-os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"] = "gpt35"
+os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"] = "qnagpt5"
 os.environ["AZURE_EMBEDDINGS_MODEL_NAME"] = "text-embedding-ada-002"
-os.environ["AZURE_EMBEDDINGS_DEPLOYMENT_NAME"] = "bradsol-embeddings"
+os.environ["AZURE_EMBEDDINGS_DEPLOYMENT_NAME"] = "bradsol-ada-embeddings"
 
 
 indexing_policy = {
@@ -56,8 +56,8 @@ openai_embeddings = AzureOpenAIEmbeddings(
     openai_api_key=os.getenv('Azure_OPENAI_API_KEY'),
 )
 
-
 def Load_ChunkData(Data):
+    print("@Load_ChunkData --")
     try:
         text_splitter = langchain_text_splitters.RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=350)
         docs = text_splitter.split_documents(Data)

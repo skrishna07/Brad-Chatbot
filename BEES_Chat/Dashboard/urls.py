@@ -28,4 +28,5 @@ urlpatterns = [
     path('getUserData/',views.getUserData,name='getUserData'),
     path('delete_user/', views.delete_user, name='delete_user'),
     path('reset_password/', views.reset_password, name='reset_password'),
+    path('fileUpload/', views.fileUpload, name='fileUpload'),
 ]
