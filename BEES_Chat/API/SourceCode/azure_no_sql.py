@@ -283,7 +283,7 @@ class AzureCosmosDBNoSqlVectorSearch(VectorStore):
     ) -> List[Tuple[Document, float]]:
         query = (
             "SELECT TOP {} c.id, c.text,c.source,c.category,VectorDistance(c.{}, {}) AS "
-            "SimilarityScore FROM c ORDER BY VectorDistance(c.{}, {})".format(
+            "SimilarityScore FROM c order by VectorDistance(c.{}, {})".format(
                 k,
                 self._embedding_key,
                 embeddings,
@@ -317,16 +317,17 @@ class AzureCosmosDBNoSqlVectorSearch(VectorStore):
         )
         for item in items2:
             text = item["text"]
-            print("\n\n")
-            print(text)
+            # print("\n\n")
+            # print(text)
             text = str(text).replace("\n", "")
             if text == '©':
                 continue
             score = item["SimilarityScore"]
-            print("Score- ", score)
+            # print("Score- ", score)
             meta = {"source": item["source"], "category": item["category"]}
             docs_and_scores.append(
                 (Document(page_content=f"{text}", metadata=meta), score))
+        print("vectorresult", items2)
         return docs_and_scores
 
     def similarity_search_with_score(

@@ -1,5 +1,4 @@
 import time
-
 import streamlit as st
 import requests
 from SourceCode.GetSessionDetails import get_ip_related_details
@@ -8,6 +7,7 @@ import warnings
 from datetime import datetime, timedelta
 from SourceCode.CSS import css_selector
 from SourceCode.CSS import custom_js
+from SourceCode.PDFChat import fileUpload
 # Current date
 from streamlit_javascript import st_javascript
 import streamlit.components.v1 as components
@@ -22,12 +22,12 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 def call_api(user_message, ip, session_id):
     # Mockoon API endpoint (replace with your actual URL)
-    api_url = "http://74.225.252.130:80/api/chat"
+    api_url = "http://127.0.0.1:8000/api/chat"
 
     # Send POST request with user message as data
     data = {"query": user_message, "ip_address": ip,
             "session_id": session_id}
-    headers = {"Authorization": "token f264b428d4e998383a15e667fb4050a49e9b2dc7"}
+    headers = {"Authorization": "token 3f84daf5b39bf8fb52b061952b1b44a9dc88e22a"}
     response = requests.post(api_url, json=data, headers=headers)
     # Check for successful response
     if response.status_code == 200:
@@ -53,7 +53,8 @@ def get_ip():
 
 def main():
     st.set_page_config(page_title="BEES Chat", page_icon=":books:")
-    ip = get_ip()
+    ip = '74.225.252.130'
+    # ip = get_ip()
     if "session_id" not in st.session_state:
         st.session_state.session_id = None
         st.session_state.chat_history = []
@@ -71,7 +72,15 @@ def main():
     st.markdown(css_selector,unsafe_allow_html=True)
     st_javascript(custom_js)
     base_url = st_javascript('window.location.origin')
-    if st.sidebar.button('New Chat',use_container_width=True):
+    with st.sidebar:
+        uploaded_files = st.file_uploader("Upload your PDFs here and click on 'Process'", accept_multiple_files=True)
+        if st.button("Process"):
+            st.query_params.clear()
+            st.session_state.session_id = None
+            st.session_state.chat_history = []
+            st.session_state.new_chat = True
+            fileUpload(uploaded_files)
+    if st.sidebar.button('New Chat', use_container_width=True):
         st.query_params.clear()
         st.session_state.session_id = None
         st.session_state.chat_history = []
@@ -138,9 +147,9 @@ def main():
                         source = output_response['source']
                         if "https" not in source:
                             url = str(source).replace(' ', '%20%')
-                            output_answer = str(output_response['response']) + "\n\nSource - " + f"https://biologicale.blob.core.windows.net/beesfiles{url}"
+                            output_answer = str(output_response['response']).replace('```html','').replace('```','') + "\n\nSource - " + f"https://biologicale.blob.core.windows.net/beesfiles{url}"
                         else:
-                            output_answer = str(output_response['response']) + "\n\nSource - " + str(source)
+                            output_answer = str(output_response['response']).replace('```html','').replace('```','') + "\n\nSource - " + str(source)
                         st.session_state.chat_history.append(query)
                         st.session_state.chat_history.append(output_answer)
     if human := st.chat_input():
@@ -152,12 +161,12 @@ def main():
             if "https" not in api_response.get("source"):
                 url = str(api_response.get("source")).replace(' ', '%20%')
                 chatbot_response = str(api_response.get(
-                    "response")) + "\n\nSource - " + f"https://biologicale.blob.core.windows.net/beesfiles{url}"
+                    "response")).replace('```html','').replace('```','') + "\n\nSource - " + f"https://biologicale.blob.core.windows.net/beesfiles{url}"
             else:
-                chatbot_response = str(api_response.get("response")) + "\n\nSource - " + str(api_response.get("source"))
+                chatbot_response = str(api_response.get("response")).replace('```html', '').replace('```', '') + "\n\nSource - " + str(api_response.get("source"))
         else:
-            chatbot_response = api_response.get("response")
-
+            chatbot_response = api_response.get("response").replace('```html', '').replace('```', '')
+        print(chatbot_response)
         st.session_state.chat_history.append(chatbot_response)
         st.rerun()
     for i, msg in enumerate(st.session_state.chat_history):

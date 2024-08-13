@@ -4,13 +4,13 @@ import json
 
 def get_ip_related_details(ip_address):
     try:
-        url = f"http://74.225.252.130:80/api/ip-details"
+        url = f"http://127.0.0.1:8000/api/ip-details"
         print(url)
         payload = json.dumps({
           "ip_address": ip_address
         })
         headers = {
-          'Authorization': 'token f264b428d4e998383a15e667fb4050a49e9b2dc7',
+          'Authorization': 'token 3f84daf5b39bf8fb52b061952b1b44a9dc88e22a',
           'Content-Type': 'application/json'
         }
 
@@ -32,13 +32,13 @@ def get_ip_related_details(ip_address):
 
 def get_session_details(session_id):
     try:
-        url = "http://74.225.252.130:80/api/session-details"
+        url = "http://127.0.0.1:8000/api/session-details"
 
         payload = json.dumps({
             "session_id": session_id
         })
         headers = {
-            'Authorization': 'token f264b428d4e998383a15e667fb4050a49e9b2dc7',
+            'Authorization': 'token 3f84daf5b39bf8fb52b061952b1b44a9dc88e22a',
             'Content-Type': 'application/json'
         }
 
