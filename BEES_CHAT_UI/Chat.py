@@ -54,8 +54,8 @@ def get_ip():
 
 def main():
     st.set_page_config(page_title="BEES Chat", page_icon=":books:")
-    ip = '74.225.252.130'
-    # ip = get_ip()
+    # ip = '74.225.252.130'
+    ip = get_ip()
     if "session_id" not in st.session_state:
         st.session_state.session_id = None
         st.session_state.chat_history = []
