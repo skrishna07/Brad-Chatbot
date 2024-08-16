@@ -85,6 +85,7 @@ def main():
         if fileUpload(uploaded_files):
             st.session_state.success_upload = True
             st.success(f"Files Processed successfully.Now you can chat.")
+            st.session_state.new_chat = True
 
 
 if __name__ == "__main__":
