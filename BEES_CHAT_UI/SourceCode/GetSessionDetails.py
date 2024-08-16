@@ -1,6 +1,8 @@
 import requests
 import json
-
+import os
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
 
 def get_ip_related_details(ip_address):
     try:
@@ -10,9 +12,9 @@ def get_ip_related_details(ip_address):
           "ip_address": ip_address
         })
         headers = {
-          'Authorization': 'token 3f84daf5b39bf8fb52b061952b1b44a9dc88e22a',
+          'Authorization': f'{os.environ.get("chat_access_token")}',
           'Content-Type': 'application/json'
-        }
+}
 
         response = requests.request("POST", url, headers=headers, data=payload)
 
@@ -38,9 +40,8 @@ def get_session_details(session_id):
             "session_id": session_id
         })
         headers = {
-            'Authorization': 'token 3f84daf5b39bf8fb52b061952b1b44a9dc88e22a',
-            'Content-Type': 'application/json'
-        }
+          'Authorization': f'{os.environ.get("chat_access_token")}',
+          'Content-Type': 'application/json'}
 
         response = requests.request("POST", url, headers=headers, data=payload)
 
@@ -49,8 +50,3 @@ def get_session_details(session_id):
 
     except Exception as e:
         print(f"Exception {e} occurred")
-
-# ip_address = '74.225.252.130'
-# print(get_ip_related_details(ip_address))
-# session_id = 'l1314czkjv6xly41rk81z5g5n4o6oe44'
-# print(get_session_details(session_id))

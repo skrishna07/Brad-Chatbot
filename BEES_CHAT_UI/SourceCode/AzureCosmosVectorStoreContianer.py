@@ -5,6 +5,8 @@ from langchain_openai import AzureOpenAIEmbeddings
 from dotenv import load_dotenv, find_dotenv
 from .Log import Logger
 import os
+import pandas as pd
+import time
 
 logger = Logger()
 store = {}
@@ -19,6 +21,14 @@ os.environ["AZURE_OPENAI_ENDPOINT"] = os.getenv('Azure_OPENAI_API_BASE')
 os.environ["AZURE_OPENAI_API_VERSION"] = os.getenv('Azure_OpenAIVersion')
 os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"] = os.getenv('Azure_OpenAIDeploymentName')
 os.environ["AZURE_EMBEDDINGS_DEPLOYMENT_NAME"] = os.getenv('Azure_EmbeddingDeploymentName')
+
+class Document:
+    def __init__(self, page_content, metadata):
+        self.page_content = page_content
+        self.metadata = metadata
+
+    def __repr__(self):
+        return f"Document(page_content='{self.page_content}', metadata={self.metadata})"
 
 
 indexing_policy = {
@@ -90,3 +100,34 @@ def delete_chunk_item(unique_id):
     except:
         logger.log(f"No data found for deletion: {unique_id}", "Error")
 
+
+def Load_Excel_ChunkData(df,category,id,file_path):
+    try:
+        text_splitter = langchain_text_splitters.RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=350)
+        data = []
+        for index, row in df.iterrows():
+            individual_row = df.iloc[index]
+            row_df = pd.DataFrame([individual_row])
+            combined_text = row_df.to_csv(index=True)
+            metadata = {'source': file_path, 'category': category, 'unique_id': id}
+            data.append(Document(page_content=combined_text, metadata=metadata))
+        all_chunks = []
+        for doc in data:
+            chunks = text_splitter.split_documents([doc])
+            all_chunks.extend(chunks)
+        AzureCosmosDBNoSqlVectorSearch.from_documents(
+            documents=all_chunks,
+            embedding=openai_embeddings,
+            cosmos_client=cosmos_client,
+            database_name=database_name,
+            container_name=container_name,
+            vector_embedding_policy=vector_embedding_policy,
+            indexing_policy=indexing_policy,
+            cosmos_container_properties=cosmos_container_properties,
+            cosmos_database_properties=cosmos_database_properties
+        )
+        print(f"successfully created chunk")
+        time.sleep(2)
+    except Exception as e:
+        error_details = logger.log(f"Error occurred in Loading Chunk Data: {str(e)}", "Error")
+        raise Exception(error_details)

@@ -7,17 +7,18 @@ import warnings
 from datetime import datetime, timedelta
 from SourceCode.CSS import css_selector
 from SourceCode.CSS import custom_js
-from SourceCode.PDFChat import fileUpload
 # Current date
+import os
 from streamlit_javascript import st_javascript
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
+
 import streamlit.components.v1 as components
 current_date = datetime.now().strftime('%Y-%m-%d')
 
 # Previous date (yesterday) in yyyy-mm-dd format
 previous_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-
 
 
 def call_api(user_message, ip, session_id):
@@ -27,7 +28,7 @@ def call_api(user_message, ip, session_id):
     # Send POST request with user message as data
     data = {"query": user_message, "ip_address": ip,
             "session_id": session_id}
-    headers = {"Authorization": "token 3f84daf5b39bf8fb52b061952b1b44a9dc88e22a"}
+    headers = {"Authorization": f"{os.environ.get('chat_access_token')}"}
     response = requests.post(api_url, json=data, headers=headers)
     # Check for successful response
     if response.status_code == 200:
@@ -72,14 +73,15 @@ def main():
     st.markdown(css_selector,unsafe_allow_html=True)
     st_javascript(custom_js)
     base_url = st_javascript('window.location.origin')
-    with st.sidebar:
-        uploaded_files = st.file_uploader("Upload your PDFs here and click on 'Process'", accept_multiple_files=True)
-        if st.button("Process"):
-            st.query_params.clear()
-            st.session_state.session_id = None
-            st.session_state.chat_history = []
-            st.session_state.new_chat = True
-            fileUpload(uploaded_files)
+    # with st.sidebar:
+    #     uploaded_files = st.file_uploader("Upload your PDFs here and click on 'Process'", accept_multiple_files=True)
+    #     if st.button("Process"):
+    #         st.query_params.clear()
+    #         st.session_state.session_id = None
+    #         st.session_state.chat_history = []
+    #         st.session_state.new_chat = True
+    #         if fileUpload(uploaded_files):
+    #             st.success(f"Files Processed successfully.Now you can chat.")
     if st.sidebar.button('New Chat', use_container_width=True):
         st.query_params.clear()
         st.session_state.session_id = None

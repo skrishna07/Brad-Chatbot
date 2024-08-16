@@ -7,9 +7,9 @@ from . import Extract_PDF
 from django.http import JsonResponse
 from urllib.parse import unquote
 from dotenv import load_dotenv, find_dotenv
-
-
+from . import Extract_Excel_File_Data
 load_dotenv(find_dotenv())
+
 
 def fileUpload(files):
     try:
@@ -39,24 +39,33 @@ def fileUpload(files):
             filename = unquote(filename)
             # Call the function to download and process the file
             filepath, file_exist = Download_AzureBlobFiles.Download_File(filename)
-
-            if file_exist:
-                # Process the file further as needed
-                # (e.g., create vectors/chunks based on the file content)
-                # You can call additional processing functions here
-                Pdf_content = Extract_PDF.process_documents(filepath, "General", '1')
-                if Pdf_content[0].page_content == '':
-                    error_details = f'Data is empty -1'
-                    continue
+            if filepath.endswith('.pdf'):
+                if file_exist:
+                    print(f"User Uploaded pdf file with path {filepath}")
+                    # Process the file further as needed
+                    # (e.g., create vectors/chunks based on the file content)
+                    # You can call additional processing functions here
+                    Pdf_content = Extract_PDF.process_documents(filepath, "General", '1')
+                    if Pdf_content[0].page_content == '':
+                        error_details = f'Data is empty -1'
+                        continue
+                    else:
+                        print("pdf_content", Pdf_content)
+                        AzureCosmosVectorStoreContianer.Load_ChunkData(Pdf_content)
                 else:
-                    print("pdf_content", Pdf_content)
-                    AzureCosmosVectorStoreContianer.Load_ChunkData(Pdf_content)
-            else:
-                return JsonResponse(
-                    {'message': f'File could not be downloaded for processing: {file.name}', 'status': 'error'},
-                    status=500)
+                    # return JsonResponse(
+                    #     {'message': f'File could not be downloaded for processing: {file.name}', 'status': 'error'},
+                    #     status=500)
+                    raise Exception(f"File could not be procesed succesfully")
+            elif filepath.endswith('.xlsx') or filepath.endswith('.csv'):
+                if file_exist:
+                    print(f"User Uploaded excel file with path {filepath}")
+                    df = Extract_Excel_File_Data.get_excel_data(filepath)
+                    AzureCosmosVectorStoreContianer.Load_Excel_ChunkData(df,'General','1',filepath)
 
         # Return a JSON response indicating success
-        return JsonResponse({'message': 'File uploaded successfully!', 'status': 'success'})
+        # return JsonResponse({'message': 'File uploaded successfully!', 'status': 'success'})
+        return True
     except Exception as e:
-        return JsonResponse({'message': f"An error occurred: {str(e)}", 'status': 'error'}, status=500)
+        # return JsonResponse({'message': f"An error occurred: {str(e)}", 'status': 'error'}, status=500)
+        raise Exception(e)
