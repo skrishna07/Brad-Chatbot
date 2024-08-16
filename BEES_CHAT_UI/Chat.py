@@ -23,7 +23,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 def call_api(user_message, ip, session_id):
     # Mockoon API endpoint (replace with your actual URL)
-    api_url = "http://127.0.0.1:8000/api/chat"
+    api_url = f"http://{os.environ.get('local_link')}/api/chat"
 
     # Send POST request with user message as data
     data = {"query": user_message, "ip_address": ip,

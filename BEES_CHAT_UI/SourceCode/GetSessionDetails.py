@@ -6,7 +6,7 @@ load_dotenv(find_dotenv())
 
 def get_ip_related_details(ip_address):
     try:
-        url = f"http://127.0.0.1:8000/api/ip-details"
+        url = f"http://{os.environ.get('local_link')}/api/ip-details"
         print(url)
         payload = json.dumps({
           "ip_address": ip_address
@@ -34,7 +34,7 @@ def get_ip_related_details(ip_address):
 
 def get_session_details(session_id):
     try:
-        url = "http://127.0.0.1:8000/api/session-details"
+        url = f"http://{os.environ.get('local_link')}/api/session-details"
 
         payload = json.dumps({
             "session_id": session_id
