@@ -15,7 +15,8 @@ def load_data_from_excel(file_path):
     if '.csv' in file_path:
         df = pd.read_csv(file_path)
     else:
-        df = pd.read_excel(file_path,sheet_name=None)
+        sheet_df = pd.read_excel(file_path,sheet_name=None)
+        df = pd.concat(sheet_df.values(), ignore_index=True)
     return df
 
 
