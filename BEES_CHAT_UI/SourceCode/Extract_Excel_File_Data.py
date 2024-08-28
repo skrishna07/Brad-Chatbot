@@ -27,13 +27,13 @@ def concatenate_row_with_columns(row, columns):
 def get_excel_data(file_path):
     data_frame = load_data_from_excel(file_path)
     # data_frame['text_representation'] = data_frame.apply(lambda row: ' | '.join(row.values.astype(str)), axis=1)
-    row = data_frame.iloc[2]
-
-    # Convert the row to a DataFrame
-    row_df = pd.DataFrame([row])
-    # Alternatively, you can focus on specific columns
-    # data_frame['text_representation'] = data_frame[['column1', 'column2']].apply(lambda row: ' | '.join(row.values.astype(str)), axis=1)
-    combined_text = row_df.to_csv(index=True)
+    # row = data_frame.iloc[2]
+    #
+    # # Convert the row to a DataFrame
+    # row_df = pd.DataFrame([row])
+    # # Alternatively, you can focus on specific columns
+    # # data_frame['text_representation'] = data_frame[['column1', 'column2']].apply(lambda row: ' | '.join(row.values.astype(str)), axis=1)
+    # combined_text = row_df.to_csv(index=True)
     # # formatted_text_data = data_frame.apply(lambda row: concatenate_row_with_columns(row, columns), axis=1)
     # # combined_text = ' '.join(formatted_text_data)
     # # combined_text = ' '.join(data_frame.astype(str).values.flatten())
